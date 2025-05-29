@@ -1,0 +1,1 @@
+this  mobile native webapp that allow's SF residents to type in the name of a book, and be linked to a digital copy of the book on one of the many free reading apps that SF city's library systems subscribes to
