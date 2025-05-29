@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SF Library Book Finder</title>
+<style>
+ body { font-family: Arial, sans-serif; margin: 0; padding: 1em; }
+ .search-box { display: flex; }
+ #results { margin-top: 1em; }
+ .services { margin-top: 1em; }
+ a { color: blue; }
+</style>
+</head>
+<body>
+<h1>SF Library Book Finder</h1>
+<div class="search-box">
+ <input type="text" id="searchInput" placeholder="Enter book title" style="flex:1;padding:0.5em;font-size:1em;" />
+ <button id="searchBtn" style="padding:0.5em;font-size:1em;">Search</button>
+</div>
+<div id="results"></div>
+<div id="services" class="services"></div>
+<script>
+async function searchBooks() {
+ const query = document.getElementById('searchInput').value.trim();
+ const resultsDiv = document.getElementById('results');
+ const servicesDiv = document.getElementById('services');
+ resultsDiv.innerHTML = '';
+ servicesDiv.innerHTML = '';
+ if (!query) return;
+ try {
+   const res = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(query)}`);
+   if (!res.ok) throw new Error('Network response was not ok');
+   const data = await res.json();
+   if (!data.docs || data.docs.length === 0) {
+     resultsDiv.textContent = 'No books found.';
+     return;
+   }
+   const list = document.createElement('ul');
+   data.docs.slice(0, 5).forEach(book => {
+     const item = document.createElement('li');
+     const url = book.key ? `https://openlibrary.org${book.key}` : '#';
+     item.innerHTML = `<a href="${url}" target="_blank">${book.title} by ${book.author_name ? book.author_name.join(', ') : 'Unknown'}</a>`;
+     list.appendChild(item);
+   });
+   resultsDiv.appendChild(list);
+
+   const serviceList = document.createElement('ul');
+   const services = [
+     { name: 'Libby/OverDrive', url: q => `https://sfpl.overdrive.com/search?query=${encodeURIComponent(q)}` },
+     { name: 'Boundless', url: q => `https://sfpl.boundless.baker-taylor.com/search?query=${encodeURIComponent(q)}` },
+     { name: 'enki', url: q => `https://enki.bibliocommons.com/v2/search?query=${encodeURIComponent(q)}` },
+     { name: 'hoopla', url: q => `https://www.hoopladigital.com/search?page=1&query=${encodeURIComponent(q)}` },
+     { name: 'UDN', url: q => `https://reading.udn.com/search/book/${encodeURIComponent(q)}` },
+     { name: 'SFPL Historical Works', url: q => `https://archive.org/details/sfpl?query=${encodeURIComponent(q)}` },
+   ];
+   services.forEach(svc => {
+     const li = document.createElement('li');
+     li.innerHTML = `<a href="${svc.url(query)}" target="_blank">Search "${query}" on ${svc.name}</a>`;
+     serviceList.appendChild(li);
+   });
+   servicesDiv.appendChild(serviceList);
+ } catch (err) {
+   resultsDiv.textContent = 'Error fetching results';
+ }
+}
+
+ document.getElementById('searchBtn').addEventListener('click', searchBooks);
+ document.getElementById('searchInput').addEventListener('keydown', (e) => {
+   if (e.key === 'Enter') searchBooks();
+ });
+</script>
+</body>
+</html>
